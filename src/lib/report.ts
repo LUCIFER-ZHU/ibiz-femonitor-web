@@ -1,6 +1,7 @@
 import stringify from "json-stringify-safe";
 import { IData, ITrackerOptions } from "./monitor";
 import { ErrorCombine } from "./monitor";
+import { MonitorDB } from "./monitor-db";
 
 export type ErrorList = Array<ErrorCombine>;
 
@@ -36,15 +37,31 @@ export class Reporter {
     });
   }
 
-  reportErrors(errorList: ErrorList): void {
+  async reportErrors(errorList: ErrorList): Promise<void> {
     if (!errorList.length) return;
-
-    const { reportUrl } = this._options;
+    const monitorDb = MonitorDB.getInstance();
+    const { reportUrl, error} = this._options;
     const reportData = this.getReportData(errorList);
-
-    this.ajax({
-      url: reportUrl,
-      data: stringify(reportData)
-    });
+    const reportNumber = error.reportNumber;
+    // 如果设置了reportNumber > 1的情况
+    if (reportNumber && reportNumber > 1) {
+      // 获取存储在数据库的数量
+      const numbers = await monitorDb.getAllMessageNumbers();
+      const messages = await monitorDb.getAllMessages();
+      // 满足条件上传
+      if ( numbers && numbers >= reportNumber) {
+        this.ajax({
+          url: reportUrl,
+          data: stringify(messages)
+        });
+        // 上传后清除数据库数据
+        await monitorDb.clearAllMessages();
+      }      
+    } else {
+      this.ajax({
+        url: reportUrl,
+        data: stringify(reportData)
+      });      
+    }
   }
 }

@@ -1,8 +1,8 @@
-import { VueConstructor } from "vue";
 import ErrorStackParser from "error-stack-parser";
 import stringify from "json-stringify-safe";
 import { BaseError, ErrorType, TrackerEvents } from "../types/index";
 import { myEmitter } from "./event";
+import { MonitorDB } from "./monitor-db";
 
 export interface IVueError extends BaseError {
   info: string | undefined;
@@ -19,14 +19,14 @@ export interface ISimpleVueError extends BaseError {
 }
 
 export class VueErrorObserver {
-  constructor(Vue: VueConstructor) {
+  constructor(Vue: any) {
     this.init(Vue);
   }
 
-  init(Vue: VueConstructor) {
-    Vue.config.errorHandler = (err, vm, info) => {
+  init(Vue: any) {
+    Vue.config.errorHandler = (err:any, vm:any, info:any) => {
       const stackTrace = err ? ErrorStackParser.parse(err) : [];
-
+      const monitorDb = MonitorDB.getInstance();
       try {
         if (vm) {
           const componentName = this.formatComponentName(vm);
@@ -41,7 +41,7 @@ export class VueErrorObserver {
             info: info,
             componentNameTrace
           };
-
+          monitorDb.addMessage(errorObj);
           myEmitter.customEmit(TrackerEvents.vuejsError, errorObj);
         } else {
           const errorObj: ISimpleVueError = {
@@ -49,7 +49,7 @@ export class VueErrorObserver {
             msg: err.message,
             stackTrace: stringify(stackTrace)
           };
-
+          monitorDb.addMessage(errorObj);
           myEmitter.customEmit(TrackerEvents.vuejsError, errorObj);
         }
       } catch (error:any) {

@@ -3,6 +3,7 @@ import { TrackerEvents, BaseError, ErrorType } from "../types/index";
 import { myEmitter } from "./event";
 import ErrorStackParser from "error-stack-parser";
 import stringify from "json-stringify-safe";
+import { MonitorDB } from "./monitor-db";
 
 export interface IError extends BaseError {
   msg: string | Event;
@@ -33,7 +34,9 @@ export class ErrorObserver {
     const self = this;
     const oldOnError = window.onerror;
     const oldUnHandleRejection = window.onunhandledrejection;
+    const monitorDb = MonitorDB.getInstance();
 
+    // JS出错
     window.onerror = function (...args) {
       if (oldOnError) {
         oldOnError(...args);
@@ -52,7 +55,7 @@ export class ErrorObserver {
         errorType: ErrorType.jsError,
         context: this
       };
-
+      monitorDb.addMessage(errorObj);
       if (typeof self._cacheError[msgText] !== "number") {
         self._cacheError[msgText] = 0;
       } else {
@@ -66,6 +69,7 @@ export class ErrorObserver {
       }
     };
 
+    // Promise出错
     window.onunhandledrejection = function (error: PromiseRejectionEvent) {
       if (oldUnHandleRejection) {
         oldUnHandleRejection.call(window, error);
@@ -73,13 +77,15 @@ export class ErrorObserver {
 
       const errorObj: IUnHandleRejectionError = {
         msg: error.reason.message,
-        stackTrace:error.reason.stack,
+        stackTrace: error.reason.stack,
         errorType: ErrorType.unHandleRejectionError,
-        context: this
       };
+
+      monitorDb.addMessage(errorObj);
       myEmitter.customEmit(TrackerEvents.unHandleRejection, errorObj);
     };
 
+    // 静态资源出错
     window.addEventListener(
       "error",
       function (event) {
@@ -95,8 +101,9 @@ export class ErrorObserver {
         const errorObj: BaseError = {
           url,
           errorType: ErrorType.resourceError,
-          context: this
         };
+
+        monitorDb.addMessage(errorObj);
         myEmitter.customEmit(TrackerEvents.resourceError, errorObj);
       },
       true

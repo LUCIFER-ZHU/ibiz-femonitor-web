@@ -3541,6 +3541,11 @@ detect-newline@^3.0.0:
   resolved "https://registry.npmmirror.com/detect-newline/download/detect-newline-3.1.0.tgz#576f5dfc63ae1a192ff192d8ad3af6308991b651"
   integrity sha1-V29d/GOuGhkv8ZLYrTr2MImRtlE=
 
+dexie@^3.0.3:
+  version "3.0.3"
+  resolved "https://registry.npmjs.org/dexie/-/dexie-3.0.3.tgz#ede63849dfe5f07e13e99bb72a040e8ac1d29dab"
+  integrity sha512-BSFhGpngnCl1DOr+8YNwBDobRMH0ziJs2vts69VilwetHYOtEDcLqo7d/XiIphM0tJZ2rPPyAGd31lgH2Ln3nw==
+
 diff-match-patch@^1.0.0:
   version "1.0.5"
   resolved "https://registry.nlark.com/diff-match-patch/download/diff-match-patch-1.0.5.tgz#abb584d5f10cd1196dfc55aa03701592ae3f7b37"

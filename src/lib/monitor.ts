@@ -1,5 +1,4 @@
 import merge from "deepmerge";
-import { VueConstructor } from "vue";
 import { myEmitter } from "./event";
 import {
   ErrorObserver,
@@ -26,6 +25,7 @@ import { SpaHandler } from "./spaHandler";
 import { RrwebObserver } from "./rrwebObserver";
 import { eventWithTime } from "rrweb/typings/types";
 import stringify from "json-stringify-safe";
+import { MonitorDB } from "./monitor-db";
 
 export type ErrorCombine =
   | IError
@@ -45,6 +45,7 @@ export interface IErrorOptions {
   random: number;
   repeat: number;
   delay: number;
+  reportNumber: number;
 }
 
 export interface IHttpOptions {
@@ -94,6 +95,7 @@ export interface IConfigDataOptions {
 
 export type IData = Record<string, unknown>;
 
+// 默认配置
 export const defaultTrackerOptions = {
   env: Env.Dev,
   reportUrl: "",
@@ -102,7 +104,8 @@ export const defaultTrackerOptions = {
     watch: true,
     random: 1,
     repeat: 5,
-    delay: 1000
+    delay: 1000,
+    reportNumber:1
   },
   performance: false,
   http: {
@@ -142,23 +145,35 @@ export class WebMonitor {
 
   public behaviorObserver: BehaviorObserver;
 
+  // 上报器
   public reporter: Reporter;
 
+  // sdk版本号
   public sdkVersion: string;
 
+  // 错误队列
   public errorQueue: ErrorCombine[] = [];
 
+  // 行为队列
   public behaviorQueue: BehaviorCombine[] = [];
 
+  // 记录web行为队列
   public rrwebQueue: eventWithTime[] = [];
 
+  // 默认配置
   private readonly defaultOptions: ITrackerOptions = defaultTrackerOptions;
 
+  // 数据
   public $data: IData = {};
 
+  // 配置
   public $options: ITrackerOptions = this.defaultOptions;
 
+  // 错误定时器
   private errorQueueTimer: any | null;
+
+  // 数据库
+  public monitorDb:any;
 
   constructor(options: Partial<ITrackerOptions> | undefined) {
     this.initOptions(options);
@@ -170,6 +185,7 @@ export class WebMonitor {
     this.initGlobalData();
     this.initInstances();
     this.initEventListeners();
+    this.initMonitorDb();
   }
 
   /**
@@ -197,6 +213,9 @@ export class WebMonitor {
     });
   }
 
+  /**
+   * 获取网络类型
+   */
   getNetworkType(): void {
     const networkType = getNetworkType();
     this.configData({
@@ -204,6 +223,9 @@ export class WebMonitor {
     });
   }
 
+  /**
+   * 获取用户代理
+   */  
   getUserAgent(): void {
     this.configData({
       _userAgent: navigator.userAgent
@@ -219,6 +241,9 @@ export class WebMonitor {
     this.$options = merge(this.$options, options);
   }
 
+  /**
+   * 初始化全局数据
+   */  
   private initGlobalData(): void {
     this.configData({
       _sdkVersion: packageJson.version,
@@ -276,6 +301,9 @@ export class WebMonitor {
     }
   }
 
+  /**
+   * 监听鼠标轨迹
+   */  
   private listenMouseTrack() {
     myEmitter.on(TrackerEvents._mouseTrack, (event: eventWithTime) => {
       if (this.rrwebQueue.length >= this.$options.rrweb.queueLimit) {
@@ -289,6 +317,9 @@ export class WebMonitor {
     });
   }
 
+  /**
+   * 监听行为
+   */  
   private listenBehaviors() {
     myEmitter.on(TrackerEvents._console, (behavior: IConsoleBehavior) => {
       this.pushBehavior(behavior);
@@ -301,6 +332,9 @@ export class WebMonitor {
     });
   }
 
+  /**
+   * 监听性能行为
+   */  
   private listenPerformanceInfo() {
     myEmitter.on(
       TrackerEvents.performanceInfoReady,
@@ -310,6 +344,9 @@ export class WebMonitor {
     );
   }
 
+  /**
+   * 插入行为
+   */  
   private pushBehavior(behavior: BehaviorCombine) {
     if (this.behaviorQueue.length >= this.$options.behavior.queueLimit) {
       this.behaviorQueue.shift();
@@ -365,6 +402,9 @@ export class WebMonitor {
     return this;
   }
 
+  /**
+   * 更改配置
+   */  
   public changeOptions(
     key: keyof ITrackerOptions,
     value: ITrackerOptions[keyof ITrackerOptions]
@@ -374,12 +414,15 @@ export class WebMonitor {
     });
   }
 
+  /**
+   * 处理错误报告
+   */  
   private handleErrorReport(): void {
     if (this.errorQueueTimer) return;
 
-    this.errorQueueTimer = setTimeout(() => {
+    this.errorQueueTimer = setTimeout(async () => {
       if (this.$options.reportUrl) {
-        this.reporter.reportErrors(this.errorQueue);
+        await this.reporter.reportErrors(this.errorQueue);
       }
 
       myEmitter.customEmit(TrackerEvents.batchErrors, {
@@ -391,6 +434,9 @@ export class WebMonitor {
     }, this.$options.error?.delay);
   }
 
+  /**
+   * 初始化事件监听
+   */   
   private initEventListeners(): void {
     const errorEvents = [
       TrackerEvents.jsError,
@@ -414,6 +460,13 @@ export class WebMonitor {
         this.handleErrorReport();
       });
     });
+  }
+
+  /**
+   * 初始化前端数据库
+   */   
+  public initMonitorDb(){
+    this.monitorDb = MonitorDB.getInstance();
   }
 
   on(event: string | symbol, listener: (...args: any[]) => void): WebMonitor {
@@ -450,7 +503,7 @@ export class WebMonitor {
     return myEmitter.customEmit(event, ...args);
   }
 
-  useVueErrorListener(Vue: VueConstructor) {
+  useVueErrorListener(Vue: any) {
     new VueErrorObserver(Vue);
   }
 }
