@@ -26,6 +26,7 @@ import { RrwebObserver } from "./rrwebObserver";
 import { eventWithTime } from "rrweb/typings/types";
 import stringify from "json-stringify-safe";
 import { MonitorDB } from "./monitor-db";
+import { SourceMapHandler } from "./sourceMapHandler";
 
 export type ErrorCombine =
   | IError
@@ -83,6 +84,7 @@ export interface ITrackerOptions {
   isSpa: boolean;
   behavior: IBehaviorOption;
   rrweb: IRrwebOption;
+  sourceMapBaseUrl: string;
 }
 
 export type ITrackerOptionsKey = keyof ITrackerOptions;
@@ -127,7 +129,8 @@ export const defaultTrackerOptions = {
     queueLimit: 50,
     delay: 1000
   },
-  isSpa: true
+  isSpa: true,
+  sourceMapBaseUrl:''
 };
 
 export class WebMonitor {
@@ -175,6 +178,9 @@ export class WebMonitor {
   // 数据库
   public monitorDb:any;
 
+  // souceMap处理器
+  public mapHandler:any;
+
   constructor(options: Partial<ITrackerOptions> | undefined) {
     this.initOptions(options);
 
@@ -186,6 +192,7 @@ export class WebMonitor {
     this.initInstances();
     this.initEventListeners();
     this.initMonitorDb();
+    this.initsouceMapHandler();
   }
 
   /**
@@ -467,6 +474,13 @@ export class WebMonitor {
    */   
   public initMonitorDb(){
     this.monitorDb = MonitorDB.getInstance();
+  }
+
+  /**
+   * 初始化souceMapHandler
+   */   
+  public initsouceMapHandler(){
+    this.mapHandler = SourceMapHandler.getInstance(this.$options);
   }
 
   on(event: string | symbol, listener: (...args: any[]) => void): WebMonitor {

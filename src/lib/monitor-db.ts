@@ -63,7 +63,7 @@ export class MonitorDB {
       this.db = new Dexie('MonitorDB');      
       // 创建表    
       this.db.version(1).stores({
-        docMessage: `&++msgId,msg,stackTrace,errorType,status,createTime,updateTime`          
+        docMessage: `&++msgId,msg,stackTrace,mapStackTrace,errorType,status,createTime,updateTime`          
       });
       this.tab = this.db.table('docMessage');
     }
@@ -187,6 +187,22 @@ export class MonitorDB {
         console.error(err)
       }
       return messages
+    }
+
+    /**
+     * @description 根据搜索条件查询某文档的所有消息
+     * @protected
+     * @memberof MonitorDB
+     */     
+    async getAllMessagesKeysByMsgObj(msgObj:{[key: string]: any}) {
+      let tbkeys:any = []
+      try {
+        tbkeys = this.tab.where(msgObj).primaryKeys()        
+        console.log(88,tbkeys);
+      } catch (err) {
+        console.error(err)
+      }
+      return tbkeys
     }
 
     /**

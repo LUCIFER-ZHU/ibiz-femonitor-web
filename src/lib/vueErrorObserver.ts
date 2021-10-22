@@ -3,6 +3,7 @@ import stringify from "json-stringify-safe";
 import { BaseError, ErrorType, TrackerEvents } from "../types/index";
 import { myEmitter } from "./event";
 import { MonitorDB } from "./monitor-db";
+import { SourceMapHandler } from "./sourceMapHandler";
 
 export interface IVueError extends BaseError {
   info: string | undefined;
@@ -11,6 +12,7 @@ export interface IVueError extends BaseError {
   msg: string;
   stackTrace: string;
   componentNameTrace: string[];
+  mapStackTrace: any;
 }
 
 export interface ISimpleVueError extends BaseError {
@@ -24,9 +26,11 @@ export class VueErrorObserver {
   }
 
   init(Vue: any) {
-    Vue.config.errorHandler = (err:any, vm:any, info:any) => {
-      const stackTrace = err ? ErrorStackParser.parse(err) : [];
+    Vue.config.errorHandler = async (err:any, vm:any, info:any) => {
       const monitorDb = MonitorDB.getInstance();
+      const mapHandler = SourceMapHandler.getInstance();
+      const stackTrace = err ? ErrorStackParser.parse(err) : [];
+      const mapStackTrace = await mapHandler.findCodeBySourceMap(stackTrace[0]);
       try {
         if (vm) {
           const componentName = this.formatComponentName(vm);
@@ -36,6 +40,7 @@ export class VueErrorObserver {
             errorType: ErrorType.vueJsError,
             msg: err.message,
             stackTrace: stringify(stackTrace),
+            mapStackTrace:mapStackTrace,
             componentName: componentName,
             propsData: propsData,
             info: info,

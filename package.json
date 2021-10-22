@@ -10,7 +10,7 @@
     "url": "https://github.com/LUCIFER-ZHU/ibiz-femonitor-web"
   },
   "license": "MIT",
-  "main": "dist/index.umd.js",
+  "main": "src/lib/monitor.ts",
   "types": "dist/src/index.d.ts",
   "files": [
     "dist",
@@ -46,7 +46,9 @@
     "rrweb": "^0.9.14",
     "tslib": "^2.2.0",
     "vue": "^2.6.12",
-    "dexie": "^3.0.3"    
+    "dexie": "^3.0.3",
+    "source-map-js": "^0.6.2",
+    "axios": "^0.21.1"   
   },
   "devDependencies": {
     "@babel/core": "^7.11.6",
