@@ -27,6 +27,7 @@ import { eventWithTime } from "rrweb/typings/types";
 import stringify from "json-stringify-safe";
 import { MonitorDB } from "./monitor-db";
 import { SourceMapHandler } from "./sourceMapHandler";
+import { userActionMonitor } from "./userActionMonitor";
 
 export type ErrorCombine =
   | IError

@@ -10,7 +10,7 @@
     "url": "https://github.com/LUCIFER-ZHU/ibiz-femonitor-web"
   },
   "license": "MIT",
-  "main": "src/lib/monitor.ts",
+  "main": "src/index.ts",
   "types": "dist/src/index.d.ts",
   "files": [
     "dist",

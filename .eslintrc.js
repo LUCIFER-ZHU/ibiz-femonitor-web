@@ -20,6 +20,7 @@ module.exports = {
     "linebreak-style": 0,
     'prefer-const': 'off',
     "@typescript-eslint/no-explicit-any": 0,
+    "@typescript-eslint/no-unused-vars": 0,
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-this-alias": [
       "error",

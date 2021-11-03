@@ -76,12 +76,13 @@ export class MonitorDB {
     async addMessage(msg:any) {
       const time = new Date().getTime();
       try {
-        await this.tab.add({
+        let r = await this.tab.add({
           ...msg,
           status: 0,
           createTime: time,
           updateTime: time
         })
+        console.log('db-save', r);
       } catch (err) {
         console.error(err)
       }
@@ -243,6 +244,7 @@ export class MonitorDB {
      async clearAllMessages() {
       try {
         this.tab.clear();
+        console.log("清除数据库数据")
       } catch (err) {
         console.error(err)
       }
